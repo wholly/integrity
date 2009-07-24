@@ -21,6 +21,9 @@ How simple is it?
 	$ cp config/config.sample.ru config/config.ru  
 	$ cp config/config.sample.yml config/config.yml      (Change contents to suite your needs) 
     $ thin -C config/config.yml -R config/config.ru start
+	$ bin/integrity migrate_db
+	$ mkdir /tmp/integrity-exports/cache
+	$ mkdir the builds directory which you mentioned in the config.yml
     $ open http://0.0.0.0:3000/
 
 
