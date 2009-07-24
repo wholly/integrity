@@ -1,5 +1,5 @@
 require "rake/testtask"
-
+require "thor"
 def spec
   @spec ||= begin
     require "rubygems/specification"

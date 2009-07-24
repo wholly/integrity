@@ -18,6 +18,7 @@ require "pathname"
 
 require "integrity/core_ext/object"
 
+require "integrity/authorization"
 require "integrity/project"
 require "integrity/author"
 require "integrity/commit"

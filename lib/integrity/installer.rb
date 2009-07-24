@@ -1,3 +1,5 @@
+require "rubygems"
+require "rack"
 require "thor"
 require File.dirname(__FILE__) + "/../integrity"
 

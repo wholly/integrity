@@ -1,5 +1,5 @@
-require "sinatra/authorization"
-
+#require "sinatra/authorization"
+#require "../authorization"
 module Integrity
   module Helpers
     module Authorization
