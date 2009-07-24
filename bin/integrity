@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require File.dirname(__FILE__) + "/../lib/integrity"
 require "integrity/installer"
+require "integrity-yammer/lib/notifier/yammer"
 
 Integrity::Installer.start

@@ -2,8 +2,8 @@ $:.unshift File.expand_path(File.dirname(__FILE__))
 
 require "rubygems"
 require "integrity/bob/lib/bob"
-require "bobette"
-require "bobette/github"
+require "integrity/bobette/lib/bobette"
+require "integrity/bobette/lib/bobette/github"
 require "sinatra/base"
 require "integrity/url_for" # its actually sinatra/url_for lib
 require "json"

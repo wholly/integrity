@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "rubygems"
-require "integrity"
+require "lib/integrity"
+require "lib/integrity-yammer/lib/notifier/yammer"
 
 Integrity.new(File.dirname(__FILE__) + "/config.yml")
 
@@ -9,7 +10,7 @@ Bob.engine = Bob::Engine::Threaded.new(20)
 
 map "/github/SECRET_TOKEN" do
   use Bobette::GitHub
-  run Bobette.new(Bobette::BuildableProject)
+  run Bobette.new(Integrity::BuildableProject)
 end
 
 map "/" do

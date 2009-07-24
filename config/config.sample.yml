@@ -14,18 +14,14 @@
 # Note:
 # * The appropriate data_objects adapter must be installed (`do_mysql`, etc)
 # * You must create the `integrity` database on localhost, of course.
-:database_uri: sqlite3:///var/integrity.db
+:database_uri: sqlite3:///pain/to/integrity.db
 
 # This is where your project's code will be checked out to. Make sure it's
 # writable by the user that runs Integrity.
-:export_directory: /path/to/scm/exports
+:export_directory: /path/to/builds
 
 # Path to the integrity log file
-:log: /var/log/integrity.log
-
-# If set to true integrity will do a build for each commit.  Otherwise
-# it will only do a build for each set of commits (i.e. each push)
-:build_all_commits: true
+:log: /path/to/integrity.log
 
 # Enable or disable HTTP authentication for the app. BE AWARE that if you
 # disable this anyone can delete and alter projects, so do it only if your
@@ -34,7 +30,7 @@
 :use_basic_auth: false
 
 # When `use_basic_auth` is true, the admin's username for HTTP authentication.
-:admin_username: username
+:admin_username: user
 
 # When `use_basic_auth` is true, the admin's password. Usually saved as a
 # SHA1 hash. See the next option.
