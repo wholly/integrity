@@ -1,10 +1,11 @@
 $:.unshift File.expand_path(File.dirname(__FILE__))
 
-require "bob"
+require "rubygems"
+require "integrity/bob/lib/bob"
 require "bobette"
 require "bobette/github"
 require "sinatra/base"
-require "sinatra/url_for"
+require "integrity/url_for" # its actually sinatra/url_for lib
 require "json"
 require "haml"
 require "sass"
