@@ -1,5 +1,9 @@
+These are the detailed steps for your reference
+
+
 1) Installing the Git from the git clone
-    git clone git://github.com/wholly/integrity.git 
+
+    		git clone git://github.com/wholly/integrity.git 
 
 2) Now following the steps in the github, firstly installing the sinatra gem
 
