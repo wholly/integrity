@@ -71,19 +71,10 @@ class EditProjectTest < Test::Unit::AcceptanceTestCase
     response_code.should == 401
   end
 
-  scenario "an admin can see the push URL on the edit page" do
-    disable_auth!
-    Project.generate(:my_test_project)
-
-    visit "/my-test-project"
-    click_link "Edit Project"
-
-    assert_have_tag("#push_url", :content => "http://www.example.com/my-test-project/push")
-  end
-
   scenario "public projects have a ticked 'public' checkbox on edit form" do
     Project.generate(:my_test_project, :public => true)
-    disable_auth!
+
+    login_as "admin", "test"
     visit "/my-test-project/edit"
 
     assert_have_tag('input[@type="checkbox"][@checked="checked"][@name="project_data[public]"]')
@@ -91,7 +82,8 @@ class EditProjectTest < Test::Unit::AcceptanceTestCase
 
   scenario "private projects have an unticked 'public' checkbox on edit form" do
     Project.generate(:my_test_project, :public => false)
-    disable_auth!
+
+    login_as "admin", "test"
     visit "/my-test-project/edit"
 
     assert_have_no_tag('input[@type="checkbox"][@checked][@name="project_data[public]"]')
@@ -101,7 +93,6 @@ class EditProjectTest < Test::Unit::AcceptanceTestCase
     Project.generate(:integrity, :public => true)
 
     login_as "admin", "test"
-
     visit "/integrity"
     click_link "Edit Project"
 

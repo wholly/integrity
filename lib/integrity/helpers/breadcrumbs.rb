@@ -2,7 +2,7 @@ module Integrity
   module Helpers
     module Breadcrumbs
       def pages
-        @pages ||= [["projects", root_path("/")], ["new project", root_path("/new")]]
+        @pages ||= [["projects", root_path], ["new project", path("/new")]]
       end
 
       def breadcrumbs(*crumbs)
@@ -10,11 +10,10 @@ module Integrity
           if page_data = pages.detect {|c| c.first == crumb }
             %Q(<a href="#{page_data.last}">#{page_data.first}</a>)
           elsif @project && @project.permalink == crumb
-            %Q(<a href="#{project_url(@project)}">#{@project.permalink}</a>)
+            %Q(<a href="#{project_path(@project)}">#{@project.permalink}</a>)
           end
         end + [crumbs.last]
       end
-
     end
   end
 end

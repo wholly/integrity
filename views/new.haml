@@ -1,4 +1,4 @@
-%form{ :method => "post", :action => (@project.new_record? ? root_path("/") : project_path(@project)) }
+%form{ :method => "post", :action => (@project.new_record? ? root_path : project_path(@project)) }
   - unless @project.new_record?
     .hidden
       %input{ :name => "_method", :type => "hidden", :value => "put" }
@@ -8,9 +8,16 @@
       &== Name #{errors_on @project, :name}
     %input.text#project_name{ :name => "project_data[name]", :type => "text", :value => h(@project.name) }
 
+  %p.required
+    %label{ :for => "project_scm" }
+      &== Repository SCM
+    %select#project_scm{ :name => "project_data[scm]"}
+      - for scm in ["Git", "SVN"]
+        %option{:value => scm.downcase, :selected => (@project.scm == scm.downcase)}= scm
+
   %p.required{ :class => error_class(@project, :uri) }
     %label{ :for => "project_repository" }<
-      &== Git repository #{errors_on @project, :uri}
+      &== Repository URI#{errors_on @project, :uri}
     %input.text#project_repository{ :name => "project_data[uri]", :type => "text", :value => h(@project.uri) }
 
   %p.normal{ :class => error_class(@project, :branch) }
@@ -35,12 +42,6 @@
     %button.positive{ :type => "submit" }= @project.new_record? ? "Create Project" : "Update Project"
 
 - unless @project.new_record?
-  %h2 Push URL
-  %p
-    You can use this Push URL with your GitHub project to enable automated continuous integration.
-  %p
-    %code#push_url= push_url_for(@project)
-
   %form{ :method => "post", :action => project_path(@project) }
     .hidden
       %input{ :name => "_method", :type => "hidden", :value => "delete" }

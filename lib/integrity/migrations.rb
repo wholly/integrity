@@ -84,9 +84,9 @@ module Integrity
         create_table :integrity_commits do
           column :id,           Integer,  :serial => true
           column :identifier,   String,   :nullable => false
-          column :message,      String,   :nullable => true, :length => 255
-          column :author,       String,   :nullable => true, :length => 255
-          column :committed_at, DateTime, :nullable => false
+          column :message,      String,   :nullable => false, :length => 255
+          column :author,       String,   :nullable => false, :length => 255
+          column :committed_at, DateTime
           column :created_at,  DateTime
           column :updated_at,  DateTime
 
@@ -147,5 +147,45 @@ module Integrity
         # modify_table(:integrity_notifiers) { drop_column :enabled }
       end
     end
+
+    migration 4, :nil_commit_metadata do
+      up do
+        all_commits = Commit.all.collect { |c| c.dup }
+        drop_table :integrity_commits
+
+        create_table :integrity_commits do
+          column :id,           Integer,  :serial => true
+          column :identifier,   String,   :nullable => false
+          column :message,      String,   :nullable => true, :length => 255
+          column :author,       String,   :nullable => true, :length => 255
+          column :committed_at, DateTime
+          column :created_at,  DateTime
+          column :updated_at,  DateTime
+
+          column :project_id,   Integer
+        end
+
+        all_commits.each { |commit| Commit.create(commit.attributes) }
+      end
+    end
+
+
+    migration 5, :add_scm_column do
+      up do
+        modify_table :integrity_projects do
+          add_column :scm, String, :default => "git"
+        end
+      end
+    end
   end
 end
+
+=begin
+TODO: drop the :building column of the project table
+
+    migration 5, :remove_building_column do
+      up do
+        modify_table(:integrity_projects) { drop_column :building }
+      end
+    end
+=end

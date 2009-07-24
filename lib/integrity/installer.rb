@@ -1,11 +1,15 @@
 require "rubygems"
 require "rack"
 require "thor"
-require File.dirname(__FILE__) + "/../integrity"
 
 module Integrity
   class Installer < Thor
     include FileUtils
+
+    def self.database_path
+      File.join(ENV["HOME"], ".integrity.sqlite3")
+    end
+    private_class_method :database_path
 
     desc "install [PATH]",
        "Copy template files to PATH for desired deployement strategy
@@ -38,22 +42,25 @@ module Integrity
     end
 
     desc "launch [CONFIG]",
-         "Launch Integrity real quick."
-    method_options :config => :optional, :port => 4567
+         "Launch Integrity real quick. Database is saved in #{database_path}."
+    method_options :config => :optional, :port => :optional
     def launch
       require "thin"
       require "do_sqlite3"
 
-      File.file?(options[:config].to_s) ?
-        Integrity.new(options[:config]) : Integrity.new
-      Integrity.config[:base_uri] = "http://0.0.0.0:#{options[:port]}"
+      port = options[:port] || 4567
 
-      DataMapper.auto_migrate!
+      config = { :database_uri => "sqlite3://#{ENV["HOME"]}/.integrity.db",
+                 :base_uri     => "http://0.0.0.0:#{port}",
+                 :export_directory => "/tmp/integrity-exports"             }
+      config.merge!(YAML.load_file(options[:config])) if options[:config]
 
-      Thin::Server.start("0.0.0.0", options[:port], Integrity::App)
+      migrate_db(config)
+
+      Thin::Server.start("0.0.0.0", port, Integrity::App)
     rescue LoadError => boom
-      missing_dependency = boom.message.split("--").last.lstrip
-      puts "Please install #{missing_dependency} to launch Integrity"
+      $stderr << "Make sure thin and do_sqlite3 are insatalled\n\n"
+      raise
     end
 
     private
@@ -102,8 +109,9 @@ Your Integrity install is ready to be deployed onto Heroku. Next steps:
 
   1. git init && git add . && git commit -am "Initial import"
   2. heroku create
-  3. git push heroku master
-  4. heroku rake db:migrate
+  3. Add heroku-given domain as :base_uri in integrity-config.rb
+  4. git push heroku master
+  5. heroku rake db:migrate
 EOF
       end
 
@@ -113,21 +121,10 @@ Awesome! Integrity was installed successfully!
 
 To complete the installation, please configure the `database_uri` in
 #{root.join("config.yml")} and install the matching DataMapper adapter if
-necessary. Then, run `integrity migrate_db #{root.join("config.yml")}
+necessary. Then, run `integrity migrate_db #{root.join("config.yml")}`
 
-== Notifiers
-If you want to enable notifiers, install the gems and then require them
-in #{root}/config.ru
-
-For example:
-
-    sudo gem install -s http://gems.github.com foca-integrity-email
-
-And then in #{root}/config.ru add:
-
-    require "notifier/email"
-
-Don't forget to tweak #{root / "config.yml"} to your needs.
+Please go to <http://integrityapp.com/#notifiers> for notifiers setup
+instructions.
 EOF
       end
 

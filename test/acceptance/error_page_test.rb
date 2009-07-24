@@ -7,8 +7,11 @@ class ErrorPageTest < Test::Unit::AcceptanceTestCase
     So that I can understand what's going on
   EOS
 
+  before { Integrity::App.disable :raise_errors }
+  after  { Integrity::App.enable  :raise_errors }
+
   scenario "an error happen while I am browsing my Integrity install" do
-    stub(Project).only_public_unless(false) { raise ArgumentError }
+    stub(Project).all { raise ArgumentError }
     lambda { visit "/" }.should raise_error(Webrat::PageLoadError)
 
     response_code.should == 500

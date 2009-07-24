@@ -40,7 +40,7 @@ class ManualBuildProjectTest < Test::Unit::AcceptanceTestCase
     git_repo(:my_test_project).add_successful_commit
     Project.gen(:my_test_project,
                 :uri => git_repo(:my_test_project).path,
-                :command => "ruby not-found.rb")
+                :command => "exit 1")
 
     login_as "admin", "test"
 
@@ -53,7 +53,7 @@ class ManualBuildProjectTest < Test::Unit::AcceptanceTestCase
     click_button "Update Project"
 
     visit "/my-test-project"
-    click_button "Build the last commit"
+    click_button "Fetch and build"
 
     assert_have_tag("h1", :content => "success")
   end
@@ -78,5 +78,21 @@ class ManualBuildProjectTest < Test::Unit::AcceptanceTestCase
     click_button "manual build"
 
     assert_have_tag("button", :content => "Rebuild")
+  end
+
+  scenario "building a Subversion repository" do
+    repo = SvnRepo.new(:my_svn_repo)
+    repo.create
+    repo.add_successful_commit
+
+    Project.gen(:name => "Project On SVN", :scm => "svn",
+      :uri  => "file://"+repo.remote, :command => "./test", :branch => "")
+
+    login_as "admin", "test"
+    visit "/"
+    click_link "Project On SVN"
+    click_button "manual build"
+
+    assert_have_tag("h1", :content => "success")
   end
 end

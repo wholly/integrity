@@ -15,9 +15,10 @@ class CreateProjectTest < Test::Unit::AcceptanceTestCase
     visit "/new"
 
     fill_in "Name",            :with => "Integrity"
-    fill_in "Git repository",  :with => "git://github.com/foca/integrity.git"
+    fill_in "Repository URI",  :with => "git://github.com/foca/integrity.git"
     fill_in "Branch to track", :with => "master"
     fill_in "Build script",    :with => "rake"
+    select  "Git",             :from => "project_scm"
     check   "Public project"
     click_button "Create Project"
 
@@ -31,6 +32,20 @@ class CreateProjectTest < Test::Unit::AcceptanceTestCase
     assert_have_tag("h1", :content => "Integrity")
   end
 
+  scenario "an admin can create a SVN repository" do
+    login_as "admin", "test"
+    visit "/new"
+
+    fill_in "Name",           :with => "Rumbster"
+    fill_in "Repository URI", :with => "foo"
+    fill_in "Build script",   :with => "rake"
+    select "SVN", :from => "project_scm"
+    check "Public project"
+    click_button "Create Project"
+
+    assert Project.first(:name => "Rumbster")
+  end
+
   scenario "an admin can create a private project" do
     Project.first(:permalink => "integrity").should be_nil
 
@@ -39,7 +54,7 @@ class CreateProjectTest < Test::Unit::AcceptanceTestCase
     visit "/new"
 
     fill_in "Name",            :with => "Integrity"
-    fill_in "Git repository",  :with => "git://github.com/foca/integrity.git"
+    fill_in "Repository URI",  :with => "git://github.com/foca/integrity.git"
     fill_in "Branch to track", :with => "master"
     fill_in "Build script",    :with => "rake"
     uncheck "Public project"
@@ -67,7 +82,7 @@ class CreateProjectTest < Test::Unit::AcceptanceTestCase
     Project.first(:permalink => "integrity").should be_nil
 
     fill_in "Name",            :with => "Integrity"
-    fill_in "Git repository",  :with => "git://github.com/foca/integrity.git"
+    fill_in "Repository URI",  :with => "git://github.com/foca/integrity.git"
     click_button "Create Project"
 
     assert_have_tag("h1", :content => 'Integrity')
@@ -89,9 +104,5 @@ class CreateProjectTest < Test::Unit::AcceptanceTestCase
     response_code.should == 401
     assert_have_tag("h1", :content => "know the password?")
     Project.first(:permalink => "integrity").should be_nil
-  end
-
-  def post(path, data={})
-    webrat.request_page(path, :post, data)
   end
 end

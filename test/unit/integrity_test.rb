@@ -3,6 +3,7 @@ require File.dirname(__FILE__) + "/../helpers"
 class IntegrityTest < Test::Unit::TestCase
   describe "#new" do
     setup do
+      Integrity.instance_variable_set(:@config, nil)
       stub(DataMapper).setup { nil }
       @config_file = File.dirname(__FILE__) + "/../../config/config.sample.yml"
     end
@@ -26,9 +27,21 @@ class IntegrityTest < Test::Unit::TestCase
 
       assert_equal "http://foo.org", Integrity.config[:base_uri]
     end
+
+    it "sets Bob's logger to the Integrity's one" do
+      Integrity.new
+
+      assert_same Bob.logger, Integrity.send(:logger)
+    end
+
+    it "sets Bob's export directory to Integrity's :export_directory option" do
+      Integrity.new
+
+      assert_same Bob.directory, Integrity.config[:export_directory]
+    end
   end
 
-  specify "config is just a hash" do
+  test "config is just a hash" do
     Integrity.config[:foo] = "bar"
     Integrity.config[:foo].should == "bar"
   end

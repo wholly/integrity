@@ -1,12 +1,7 @@
 require File.dirname(__FILE__) + "/../helpers"
 
 class ProjectTest < Test::Unit::TestCase
-  before(:each) do
-    RR.reset
-    ignore_logs!
-  end
-
-  specify "default fixture is valid and can be saved" do
+  test "default fixture is valid and can be saved" do
     lambda do
       Project.generate.tap do |project|
         project.should be_valid
@@ -15,7 +10,7 @@ class ProjectTest < Test::Unit::TestCase
     end.should change(Project, :count).by(1)
   end
 
-  specify "integrity fixture is valid and can be saved" do
+  test "integrity fixture is valid and can be saved" do
     lambda do
       Project.generate(:integrity).tap do |project|
         project.should be_valid
@@ -30,85 +25,91 @@ class ProjectTest < Test::Unit::TestCase
     end
 
     it "has a name" do
-      @project.name.should == "Integrity"
+      assert_equal "Integrity", @project.name
     end
 
     it "has a permalink" do
-      @project.permalink.should == "integrity"
+      assert_equal "integrity", @project.permalink
 
-      @project.tap do |project|
-        project.name = "foo's bar/baz and BACON?!"
-        project.save
-      end.permalink.should == "foos-bar-baz-and-bacon"
+      assert_equal "foos-bar-baz-and-bacon",
+        Project.gen(:name => "foo's bar/baz and BACON?!").permalink
     end
 
     it "has an URI" do
-      @project.uri.should == Addressable::URI.parse("git://github.com/foca/integrity.git")
+      assert_equal "git://github.com/foca/integrity.git",
+        @project.uri.to_s
+    end
+
+    it "has an SCM" do
+      @project.scm.should == "git"
+      Project.new.scm.should == "git"
     end
 
     it "has a branch" do
-      @project.branch.should == "master"
-    end
-
-    specify "branch defaults to master" do
-      Project.new.branch.should == "master"
+      assert_equal "master", @project.branch
+      assert_equal "",       Project.new.branch
     end
 
     it "has a command" do
       # TODO: rename to build_command
-      @project.command.should == "rake"
+      assert_equal "rake", @project.command
+      assert_equal "rake", Project.new.command
     end
 
-    specify "command defaults to 'rake'" do
-      Project.new.command.should == "rake"
-    end
-
-    it "has a building flag" do
-      @project.should_not be_building
-    end
-
-    specify "building flag default to false" do
-      Project.new.should_not be_building
+    it "knows wheter it is being built" do
+      assert ! @project.building?
     end
 
     it "knows it's visibility" do
       # TODO: rename Project#public property to visibility
       # TODO: and have utility method to query its state instead
 
-      Project.new.should be_public
+      assert Project.new.public?
 
-      @project.should be_public
-      @project.tap { |p| p.public = "1" }.should be_public
-      @project.tap { |p| p.public = "0" }.should_not be_public
+      assert @project.public?
+      assert Project.gen(:public => "1").public?
+      assert ! Project.gen(:public => "0").public?
 
-      Project.gen(:public => "false").should be_public
-      Project.gen(:public => "true").should be_public
-      Project.gen(:public => false).should_not be_public
-      Project.gen(:public => nil).should_not be_public
+      assert Project.gen(:public => "false").public?
+      assert Project.gen(:public => "true").public?
+      assert ! Project.gen(:public => false).public?
+      assert ! Project.gen(:public => nil).public?
     end
 
-    it "has a created_at" do
-      @project.created_at.should be_a(DateTime)
-    end
-
-    it "has an updated_at" do
-      @project.updated_at.should be_a(DateTime)
+    it "has created_at and updated_at timestamps" do
+      assert_kind_of DateTime, @project.created_at
+      assert_kind_of DateTime, @project.updated_at
     end
 
     it "knows it's status" do
-      Project.gen(:commits => 1.of{ Commit.gen(:successful) }).status.should == :success
-      Project.gen(:commits => 2.of{ Commit.gen(:successful) }).status.should == :success
-      Project.gen(:commits => 2.of{ Commit.gen(:failed) }).status.should == :failed
-      Project.gen(:commits => 1.of{ Commit.gen(:pending) }).status.should == :pending
-      Project.gen(:commits => []).status.should be_nil
+      assert_equal :success,
+        Project.gen(:commits => 1.of{ Commit.gen(:successful) }).status
+
+      assert_equal :success,
+        Project.gen(:commits => 2.of{ Commit.gen(:successful) }).status
+
+      assert_equal :failed,
+        Project.gen(:commits => 2.of{ Commit.gen(:failed) }).status
+
+      assert_equal :pending,
+        Project.gen(:commits => 1.of{ Commit.gen(:pending) }).status
+
+      assert_equal :blank, Project.gen(:commits => []).status
+
+      assert_equal :building,
+        Project.gen(:commits => 1.of{ Commit.gen(:building) }).status
+
+      commits = 3.of{Commit.gen(:successful)} << Commit.gen(:building)
+      assert Project.gen(:commits => commits).building?
     end
 
-    it "knows it's last build" do
-      Project.gen(:commits => []).last_commit.should be_nil
+    it "knows it's last commuit" do
+      assert Project.gen(:commits => []).last_commit.nil?
 
       commits = 5.of { Commit.gen(:successful) }
       project = Project.gen(:commits => commits)
-      project.last_commit.should == commits.sort_by {|c| c.committed_at }.last
+      assert_equal commits.sort_by {|c| c.committed_at }.last,
+        project.last_commit
     end
   end
 
@@ -125,9 +126,9 @@ class ProjectTest < Test::Unit::TestCase
       end.should_not change(Project, :count)
     end
 
-    it "requires a branch" do
+    it "requires an SCM" do
       lambda do
-        Project.gen(:branch => nil).should_not be_valid
+        Project.gen(:scm => nil).should_not be_valid
       end.should_not change(Project, :count)
     end
 
@@ -145,23 +146,14 @@ class ProjectTest < Test::Unit::TestCase
     end
   end
 
-  describe "Finding public or private projects" do
-    before(:each) do
-      @public_project = Project.gen(:public => true)
-      @private_project = Project.gen(:public => false)
-    end
+  it "orders projects by name" do
+    @rails   = Project.gen(:name => "rails",   :public => true)
+    @merb    = Project.gen(:name => "merb",    :public => true)
+    @sinatra = Project.gen(:name => "sinatra", :public => true)
+    @camping = Project.gen(:name => "camping", :public => false)
 
-    it "finds only public projects if the condition passed is false" do
-      projects = Project.only_public_unless(false)
-      projects.should_not include(@private_project)
-      projects.should include(@public_project)
-    end
-
-    it "finds both private and public projects if the condition passed is true" do
-      projects = Project.only_public_unless(true)
-      projects.should include(@private_project)
-      projects.should include(@public_project)
-    end
+    Project.all.should == [@camping, @merb, @rails, @sinatra]
+    Project.all(:public => true).should == [@merb, @rails, @sinatra]
   end
 
   describe "When finding its previous builds" do
@@ -199,9 +191,8 @@ class ProjectTest < Test::Unit::TestCase
       @project = Project.generate(:commits => @commits)
     end
 
-    it "destroys itself and tell ProjectBuilder to delete the code from disk" do
+    it "destroys itself" do
       lambda do
-        stub.instance_of(ProjectBuilder).delete_code
         @project.destroy
       end.should change(Project, :count).by(-1)
     end
@@ -231,8 +222,10 @@ class ProjectTest < Test::Unit::TestCase
 
       assert_equal 2,         Notifier.count
       assert_equal 2,         project.enabled_notifiers.count
-      assert_equal "IRC",     project.notifiers.first.name
-      assert_equal "Twitter", project.notifiers.last.name
+
+      notifier_names = project.notifiers.map { |n| n.name }
+      assert notifier_names.include?("IRC")
+      assert notifier_names.include?("Twitter")
 
       project.update_notifiers(["Twitter"],
           {"IRC"     => {"uri" => "irc://irc.freenode.net/integrity"},
@@ -302,16 +295,16 @@ class ProjectTest < Test::Unit::TestCase
       assert_equal 1, project.enabled_notifiers.size
     end
 
-    specify "#config_for returns given notifier's configuration" do
+    test "#config_for returns given notifier's configuration" do
       @project.update_attributes(:notifiers => [@irc])
       @project.config_for("IRC").should == {:uri => "irc://irc.freenode.net/integrity"}
     end
 
-    specify "#config_for returns an empty hash for unknown notifier" do
+    test "#config_for returns an empty hash for unknown notifier" do
       @project.config_for("IRC").should == {}
     end
 
-    specify "#notifies? is true if the notifier exists and is enabled" do
+    test "#notifies? is true if the notifier exists and is enabled" do
       assert ! @project.notifies?("UndefinedNotifier")
 
       @project.update_attributes(:notifiers =>
@@ -320,44 +313,6 @@ class ProjectTest < Test::Unit::TestCase
 
       assert @project.notifies?("IRC")
       assert ! @project.notifies?("Twitter")
-    end
-  end
-
-  describe "When building a commit" do
-    before(:each) do
-      @commits = 2.of { Commit.gen }
-      @project = Project.gen(:integrity, :commits => @commits)
-      stub.instance_of(ProjectBuilder).build { nil }
-    end
-
-    it "gets the specified commit and creates a pending build for it" do
-      commit = @commits.last
-
-      lambda {
-        @project.build(commit.identifier)
-      }.should change(Build, :count).by(1)
-
-      build = Build.all.last
-      build.commit.should be(commit)
-      build.should be_pending
-
-      commit.should be_pending
-    end
-
-    it "creates an empty commit with the head of the project if passed 'HEAD' (the default)" do
-      mock(@project).head_of_remote_repo { "FOOBAR" }
-
-      lambda {
-        @project.build("HEAD")
-      }.should change(Commit, :count).by(1)
-
-      build = Build.all.last
-      build.commit.should == @project.last_commit
-
-      @project.last_commit.should be_pending
-      @project.last_commit.identifier.should  == "FOOBAR"
-      @project.last_commit.author.name.should == "<Commit author not loaded>"
-      @project.last_commit.message.should     == "<Commit message not loaded>"
     end
   end
 end

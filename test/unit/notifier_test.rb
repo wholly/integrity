@@ -1,7 +1,8 @@
 require File.dirname(__FILE__) + "/../helpers"
+require "helpers/acceptance/textfile_notifier"
 
 class NotifierTest < Test::Unit::TestCase
-  specify "IRC fixture is valid and can be saved" do
+  test "IRC fixture is valid and can be saved" do
     lambda do
       Notifier.generate(:irc).tap do |project|
         project.should be_valid
@@ -10,7 +11,7 @@ class NotifierTest < Test::Unit::TestCase
     end.should change(Project, :count).by(1)
   end
 
-  specify "Twitter fixture is valid and can be saved" do
+  test "Twitter fixture is valid and can be saved" do
     lambda do
       Notifier.generate(:twitter).tap do |project|
         project.should be_valid
@@ -68,8 +69,6 @@ class NotifierTest < Test::Unit::TestCase
 
   describe "Registering a notifier" do
     it "registers given notifier class" do
-      load "helpers/acceptance/textfile_notifier.rb"
-
       Notifier.register(Integrity::Notifier::Textfile)
 
       assert_equal Integrity::Notifier::Textfile,
@@ -91,6 +90,18 @@ class NotifierTest < Test::Unit::TestCase
     build = Build.gen
 
     mock(Notifier::IRC).notify_of_build(build, irc.config) { nil }
+
+    irc.notify_of_build(build)
+  end
+
+  it "handles notifier timeouts" do
+    irc   = Notifier.gen(:irc)
+    Notifier.register(Integrity::Notifier::IRC)
+    build = Build.gen
+
+    stub.instance_of(Notifier::IRC).deliver! { raise Timeout::Error }
+    mock(Integrity).log(anything)
+    mock(Integrity).log("Integrity::Notifier::IRC notifier timed out") { nil }
 
     irc.notify_of_build(build)
   end

@@ -30,15 +30,21 @@ class BrowsePublicProjectsTest < Test::Unit::AcceptanceTestCase
   scenario "a user can see the projects status on the home page" do
     integrity = Project.gen(:integrity, :commits => 3.of { Commit.gen(:successful) })
     test      = Project.gen(:my_test_project, :commits => 2.of { Commit.gen(:failed) })
-    no_build  = Project.gen(:public => true, :building => false)
-    building  = Project.gen(:public => true, :building => true)
+    no_build  = Project.gen(:name => "none yet", :public => true)
+    building  = Project.gen(:name => "building", :public => true,
+                            :commits => 1.of{ Commit.gen(:building) })
 
     visit "/"
 
-    assert_contain("Built #{integrity.last_commit.short_identifier} successfully")
-    assert_contain("Built #{test.last_commit.short_identifier} and failed")
-    assert_contain("Never built yet")
-    assert_contain("Building!")
+    assert_have_tag("li[@class~=success]",
+      :content => "Built #{integrity.last_commit.short_identifier} successfully")
+
+    assert_have_tag("li[@class~=failed]",
+      :content => "Built #{test.last_commit.short_identifier} and failed")
+
+    assert_have_tag("li[@class~=blank]", :content => "Never built yet")
+
+    assert_have_tag("li[@class~=building]", :content => "Building!")
   end
 
   scenario "a user clicking through a link on the home page for a public project arrives at the project page" do

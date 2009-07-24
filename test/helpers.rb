@@ -1,16 +1,8 @@
 $:.unshift File.dirname(__FILE__) + "/../lib", File.dirname(__FILE__)
 
-require "rubygems"
-
 require "test/unit"
 require "rr"
-require "mocha"
 require "dm-sweatshop"
-require "webrat/sinatra"
-
-gem "jeremymcanally-context"
-gem "jeremymcanally-matchy"
-gem "jeremymcanally-pending"
 require "context"
 require "matchy"
 require "pending"
@@ -27,10 +19,6 @@ rescue LoadError
 end
 
 module TestHelper
-  def ignore_logs!
-    Integrity.config[:log] = "/tmp/integrity.test.log"
-  end
-
   def capture_stdout
     output = StringIO.new
     $stdout = output
@@ -38,42 +26,26 @@ module TestHelper
     $stdout = STDOUT
     output
   end
-
-  def silence_warnings
-    $VERBOSE, v = nil, $VERBOSE
-    yield
-  ensure
-    $VERBOSE = v
-  end
 end
 
 class Test::Unit::TestCase
-  class << self
-    alias_method :specify, :test
-  end
-
   include RR::Adapters::TestUnit
   include Integrity
   include TestHelper
 
   before(:all) do
     DataMapper.setup(:default, "sqlite3::memory:")
-
     require "integrity/migrations"
   end
 
   before(:each) do
-    [Project, Build, Commit, Notifier].each(&:auto_migrate_down!)
+    [Project, Build, Commit, Notifier].each{ |i| i.auto_migrate_down! }
     capture_stdout { Integrity.migrate_db }
-
-    RR.reset
-
-    Notifier.available.each { |n|
-      Notifier.send(:remove_const, n.to_s.split(":").last.to_sym)
-    }
 
     Notifier.available.clear
     Integrity.instance_variable_set(:@config, nil)
+
+    Integrity.config[:log] = "integrity.log"
   end
 
   after(:each) do

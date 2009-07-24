@@ -1,11 +1,9 @@
 module Integrity
-  class App < Sinatra::Default
+  class App < Sinatra::Base
     set :root,     File.dirname(__FILE__) + "/../.."
-    set :app_file, __FILE__
-    enable :sessions
+    enable :methodoverride, :static, :sessions
 
-    include Integrity
-    include Integrity::Helpers
+    helpers Sinatra::UrlForHelper, Integrity::Helpers
 
     not_found do
       status 404
@@ -23,6 +21,8 @@ module Integrity
       # required to do so. This way we get the real values of +#logged_in?+ and
       # +#current_user+
       login_required if session[:user]
+
+      Integrity.config[:base_uri] ||= url_for("/", :full)
     end
 
     get "/integrity.css" do
@@ -32,7 +32,7 @@ module Integrity
     end
 
     get "/?" do
-      @projects = Project.only_public_unless(authorized?)
+      @projects = authorized? ? Project.all : Project.all(:public => true)
       show :home, :title => "projects"
     end
 
@@ -61,12 +61,6 @@ module Integrity
       else
         show :new, :title => ["projects", "new project"]
       end
-    end
-
-    get "/:project.atom" do
-      login_required unless current_project.public?
-      response["Content-Type"] = "application/rss+xml; charset=utf-8"
-      builder :project
     end
 
     get "/:project" do
@@ -98,23 +92,10 @@ module Integrity
       show :new, :title => ["projects", current_project.permalink, "edit"]
     end
 
-    post "/:project/push" do
-      login_required
-
-      content_type "text/plain"
-
-      begin
-        current_project.push(params[:payload])
-        201
-      rescue ArgumentError
-        [422, "Invalid Request"]
-      end
-    end
-
     post "/:project/builds" do
       login_required
 
-      current_project.build
+      current_project.build(:head)
       redirect project_url(current_project).to_s
     end
 

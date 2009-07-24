@@ -2,13 +2,13 @@ module Integrity
   class Commit
     include DataMapper::Resource
 
-    property :id,           Integer,  :serial => true
+    property :id,           Serial
     property :identifier,   String,   :nullable => false
     property :message,      String,   :length => 255
     property :author,       Author,   :length => 255
     property :committed_at, DateTime
-    property :created_at,   DateTime
-    property :updated_at,   DateTime
+
+    timestamps :at
 
     has 1,     :build,   :class_name => "Integrity::Build",
                          :order => [:created_at.desc]
@@ -45,11 +45,16 @@ module Integrity
       status == :pending
     end
 
+    def building?
+      status == :building
+    end
+
     def human_readable_status
       case status
       when :success; "Built #{short_identifier} successfully"
       when :failed;  "Built #{short_identifier} and failed"
       when :pending; "#{short_identifier} hasn't been built yet"
+      when :building; "#{short_identifier} is building"
       end
     end
 

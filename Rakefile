@@ -7,13 +7,9 @@ def spec
   end
 end
 
+
 desc "Default: run all tests"
 task :default => :test
-
-desc "Launch Integrity real quick"
-task :launch do
-  ruby "bin/integrity launch"
-end
 
 desc "Run tests"
 task :test => %w(test:units test:acceptance)
@@ -30,28 +26,34 @@ namespace :test do
 end
 
 begin
-  require "mg"
   require "metric_fu"
 
+  task :metrics do
+    metrics = [:churn, :flog, :flay, :reek, :roodi]
+    MetricFu::Configuration.run { |c| c.metrics = metrics }
+
+    Rake::Task["metrics:all"].invoke
+  end
+
+  desc "Special task for running tests on <http://builder.integrityapp.com>"
+  task :ci => [:test, :metrics] do
+    rm_rf "/var/www/integrity-metrics"
+    mv "tmp/metric_fu", "/var/www/integrity-metrics"
+
+    File.open("/var/www/integrity-metrics/index.html", "w") { |f|
+      f.puts "<ul>"
+      MetricFu.configuration.metrics.map { |m| m.to_s.split(":").first }.each { |m|
+        f.puts %Q(<li><a href="/#{m}">#{m}</a></li>)
+      }
+      f.puts "</ul>"
+    }
+  end
+rescue LoadError
+end
+
+begin
+  require "mg"
   MG.new("integrity.gemspec")
 rescue LoadError
 end
 
-desc "Special task for running tests on <http://builder.integrityapp.com>"
-task :ci do
-  Rake::Task["test"].invoke
-
-  metrics = %w(flay flog:all reek roodi saikuro)
-  metrics.each { |m| Rake::Task["metrics:#{m}"].invoke }
-
-  rm_rf "/var/www/integrity-metrics"
-  mv "tmp/metric_fu", "/var/www/integrity-metrics"
-
-  File.open("/var/www/integrity-metrics/index.html", "w") { |f|
-    f.puts "<ul>"
-    metrics.map { |m| m.split(":").first }.each { |m|
-      f.puts %Q(<li><a href="/#{m}">#{m}</a></li>)
-    }
-    f.puts "</ul>"
-  }
-end

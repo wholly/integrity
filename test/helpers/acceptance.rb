@@ -1,83 +1,90 @@
+$LOAD_PATH.unshift(File.dirname(__FILE__) + "/../../vendor/webrat/lib")
+
 require File.dirname(__FILE__) + "/../helpers"
 
-gem "foca-storyteller"
 require "storyteller"
+require "webrat"
+require "rack/test"
+require "bob/test"
 
-require "helpers/acceptance/git_helper"
+Rack::Test::DEFAULT_HOST.replace("www.example.com")
 
 module AcceptanceHelper
-  include FileUtils
+  include Bob::Test
 
-  def export_directory
-    File.dirname(__FILE__) + "/../../exports"
-  end
-
-  def enable_auth!
-    Integrity.config[:use_basic_auth]      = true
-    Integrity.config[:admin_username]      = "admin"
-    Integrity.config[:admin_password]      = "test"
-    Integrity.config[:hash_admin_password] = false
+  def git_repo(name)
+    GitRepo.new(name).tap { |repo|
+      repo.create unless File.directory?(repo.path)
+    }
   end
 
   def login_as(user, password)
     def AcceptanceHelper.logged_in; true; end
-    basic_auth user, password
-    visit "/login"
+    basic_authorize user, password
     Integrity::App.before { login_required if AcceptanceHelper.logged_in }
   end
 
   def log_out
     def AcceptanceHelper.logged_in; false; end
-    @_webrat_session = Webrat::SinatraSession.new(self)
-  end
-
-  def disable_auth!
-    Integrity.config[:use_basic_auth] = false
-  end
-
-  def set_and_create_export_directory!
-    FileUtils.rm_r(export_directory) if File.directory?(export_directory)
-    FileUtils.mkdir(export_directory)
-    Integrity.config[:export_directory] = export_directory
-  end
-
-  def setup_log!
-    log_file = Pathname(File.dirname(__FILE__) + "/../../integrity.log")
-    log_file.delete if log_file.exist?
-    Integrity.config[:log] = log_file
+    rack_test_session.header("HTTP_AUTHORIZATION", nil)
+    @_webrat_session = Webrat::Session.new(Webrat::RackSession.new(self))
   end
 end
 
 class Test::Unit::AcceptanceTestCase < Test::Unit::TestCase
+  include FileUtils
   include AcceptanceHelper
   include Test::Storyteller
-  include GitHelper
+
+  include Rack::Test::Methods
   include Webrat::Methods
   include Webrat::Matchers
   include Webrat::HaveTagMatcher
 
-  # TODO: does this belongs in Webrat::SinatraSession?
   Webrat::Methods.delegate_to_session :response_code
 
   def app
-    Integrity::App.tap { |app|
-      app.set     :environment, :test
-      app.disable :raise_errors, :run, :reload
+    Rack::Builder.new {
+      map "/github" do
+        use Bobette::GitHub do
+          ! Integrity.config[:build_all_commits]
+        end
+
+        run Bobette.new(Integrity::BuildableProject)
+      end
+
+      map "/" do
+        use Rack::Lint
+        run Integrity::App
+      end
     }
   end
 
+  before(:all) do
+    Integrity::App.set(:environment, :test)
+
+    Webrat.configure { |c| c.mode = :rack }
+  end
+
   before(:each) do
-    # ensure each scenario is run in a clean sandbox
-    Integrity.config[:base_uri] = "http://www.example.com"
-    enable_auth!
-    setup_log!
-    set_and_create_export_directory!
+    Bob.directory = File.expand_path(File.dirname(__FILE__) + "/../../../tmp")
+    Bob.engine    = Bob::Engine::Foreground
+    Bob.logger    = Logger.new("/dev/null")
+
+    mkdir(Bob.directory)
+
+    Integrity.config = {
+      :export_directory => Bob.directory,
+      :use_basic_auth   => true,
+      :admin_username   => "admin",
+      :admin_password   => "test",
+      :hash_admin_password => false
+    }
+
     log_out
   end
 
   after(:each) do
-    destroy_all_git_repos
-    rm_r export_directory if File.directory?(export_directory)
+    rm_rf(Bob.directory)
   end
-
 end
