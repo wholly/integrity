@@ -15,6 +15,20 @@ These are the detailed steps for your reference
    
                 gem install sinatra-sinatra -s http://gems.github.com
 
+     (iii) Also, Make Sure that you have the following gems installed on your machine
+   				
+				dm-core 
+				dm-types
+				dm-timestamps 
+				dm-serializer 
+				dm-observer 
+				dm-migrations 
+				dm-is-tree 
+				dm-cli 
+				dm-aggregates 
+				dm-validations
+  				thor -v=0.9.9 
+
 3) Next with thin and sqlite adapters (as mysql is not working with Integrity yet) and oauth
      
 				gem install thin do_sqlite3
@@ -33,7 +47,7 @@ These are the detailed steps for your reference
 
 6)  Db Migrate step
  		
-				bin/integrity migrate_db				
+				bin/integrity migrate_db config/config.yml 			
 
 7) make sure these directories exist :
     (i)   :export_directory --> The directory path which you have specified in config.yml
@@ -81,6 +95,7 @@ STEPS TO GENERATE THE KEYS FOR THE YAMMER
 
 		We support HMAC-SHA1 (recommended) as well as plain text in SSL mode.
 
+2) Uncomment the lines in the config.ru lines 4 & 6
 
 2) use the script in the yammer_create_oauth_yml.rb which you can find in the /vendor/yammer4r/bin director and follow the instructions as in the file to get the access token and access secret 
 
