@@ -1,0 +1,8 @@
+consumer:
+  key: hfv5z5qf5Rd442UgCEstQ
+  secret: 4CkdgtmQKj1VxqqPab8c7tHK1oU38spzGmNzRFQ
+  
+access:
+  token: CONSUMER_TOKEN
+  secret: CONSUMER_SECRET
+

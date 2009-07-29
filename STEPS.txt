@@ -56,3 +56,34 @@ These are the detailed steps for your reference
     open localhost:3000  ( default port is 3000)
 
  and create a new project and click on Manual Build. It doesn't give you any signs of the process being completed, upon returning to the projects page, you will find the details of the build
+
+
+
+
+
+------------------------------------------------------
+
+
+STEPS TO GENERATE THE KEYS FOR THE YAMMER
+
+1) Register your application with the "https://www.yammer.com/client_applications/new"
+
+ 		In here you are given with the following format:
+   
+
+
+		OAuth details for XXXXXX
+		Consumer (Application) Key: 	hfv5z5qf5Rd442UgCEstQ
+		Consumer (Application) Secret: 	4CkdgtmQKj1VxqqPab8c7tHK1oU38spzGmNzRFQ
+		Request Token URL 	https://www.yammer.com/oauth/request_token
+		Access Token URL 	https://www.yammer.com/oauth/access_token
+		Authorize URL 	https://www.yammer.com/oauth/authorize
+
+		We support HMAC-SHA1 (recommended) as well as plain text in SSL mode.
+
+
+2) use the script in the yammer_create_oauth_yml.rb which you can find in the /vendor/yammer4r/bin director and follow the instructions as in the file to get the access token and access secret 
+
+
+3)  Restart the integrity application and start using the yammer notifier 
+

@@ -1,7 +1,8 @@
 require 'rubygems'
 require 'integrity'
 require 'oauth/consumer'
-require 'yammer4r'
+#require 'yammer4r'
+require 'vendor/yammer4r/lib/yammer4r'
 
 module Integrity
   class Notifier
@@ -9,7 +10,7 @@ module Integrity
 
       attr_reader :config
 
-      def initialize(build, config = {})
+      def initialize(commit, config = {})
         @yammer_client = ::Yammer::Client.new(:config => config['oauth_yml']) 
         super
       end
@@ -23,10 +24,11 @@ module Integrity
       end
 
       def message
+        build = @commit
         @message ||= <<-content
-#{build.project.name}: #{short_message} (at #{build.commited_at} by #{build.commit_author.name})
- Commit Message: '#{build.commit_message}'
- Link: #{build_url}
+ #{build.project.name}: #{short_message} (just before by #{build.author})
+ Commit Message: '#{build.message}'
+ Link: #{commit_url}
 content
       end
       

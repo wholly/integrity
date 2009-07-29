@@ -3,7 +3,7 @@ module Integrity
     class Base
       def self.notify_of_build(build, config)
         Integrity.log "Notifying of build #{build.commit.short_identifier} using the #{to_s} notifier"
-        Timeout.timeout(8) { new(build.commit, config).deliver! }
+        Timeout.timeout(8) { new(build.commit, config).deliver! }   #actualy it is build.commit that is passed.
       rescue Timeout::Error
         Integrity.log "#{to_s} notifier timed out"
         false
