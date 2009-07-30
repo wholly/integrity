@@ -31,7 +31,8 @@ module Integrity
       sass :integrity
     end
 
-    get "/?" do
+    get "/?" do     
+      login_required  
       @projects = authorized? ? Project.all : Project.all(:public => true)
       show :home, :title => "projects"
     end

@@ -19,16 +19,14 @@ module Integrity
         File.read File.dirname(__FILE__) / "config.haml"
       end
 
-      def deliver!
+      def deliver! 
         @yammer_client.message(:post, :body => message)
       end
 
       def message
         build = @commit
         @message ||= <<-content
- #{build.project.name}: #{short_message} (just before by #{build.author})
- Commit Message: '#{build.message}'
- Link: #{commit_url}
+ #{build.project.name}: #{full_message} 
 content
       end
       

@@ -72,8 +72,13 @@ These are the detailed steps for your reference
  and create a new project and click on Manual Build. It doesn't give you any signs of the process being completed, upon returning to the projects page, you will find the details of the build
 
 
+STEPS TO REQUEST BUILD FROM COMMANDLINE
 
+curl -F "a=b" "localhost:3000/<project_name>/builds"
 
+if using basic http authentication
+
+curl -F "a=b" "username:password@localhost:3000/<project_name>/builds"     
 
 ------------------------------------------------------
 

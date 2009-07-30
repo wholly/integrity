@@ -2,8 +2,10 @@
 require "rubygems"
 require "lib/integrity"
 #require "lib/integrity-yammer/lib/notifier/yammer"
-#Uncomment the above and below lines to use yammer notifier
-#Integrity.new(File.dirname(__FILE__) + "/config.yml")
+#Uncomment the above and below lines to use yammer notifier 
+#Integrity::Notifier.register(Integrity::Notifier::Yammer)
+
+Integrity.new(File.dirname(__FILE__) + "/config.yml")
 
 # Use a pool of 20 threads for parralel builds
 Bob.engine = Bob::Engine::Threaded.new(20)

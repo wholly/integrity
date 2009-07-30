@@ -34,7 +34,7 @@ module Integrity
     def finish_building(commit_id, status, output)
       if build = @project.commits.first(:identifier => commit_id).build
         build.update_attributes(:successful => status,
-          :output => output, :completed_at => Time.now)
+          :output => output, :completed_at => Time.now)   
         @project.enabled_notifiers.each { |n| n.notify_of_build(build) }
       end
     end
