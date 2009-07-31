@@ -28,7 +28,19 @@ module Integrity
         @message ||= <<-content
  #{build.project.name}: #{full_message} 
 content
-      end
+      end  
+      
+      def deliver_custom_message(msg)
+        @yammer_client.message(:post, :body => msg) 
+      end  
+      
+        def deployment_enabled?   # if this method returns true , integrity will take one step further and call deployment_task and post notification to yammer about deployment status
+          false
+        end  
+
+        def deployment_task  # returns a string that needs to be passed to Kernel#system
+           "echo " # any shell script here    , example rake deploy   
+        end
       
     end
   end
